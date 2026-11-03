@@ -43,7 +43,8 @@ static int tokens(char *line, char **out, int cap) {
     return n;
 }
 
-/* FIFO linear: elemen aktif selalu a[0..n). Dequeue menggeser kiri O(n)
+/* Varian tambahan BERGESER, bukan linear front/rear Modul 6.3.
+   FIFO linear: elemen aktif selalu a[0..n). Dequeue menggeser kiri O(n)
    (best O(1) saat satu elemen); enqueue/peek O(1), print O(n).
    Ruang tetap O(8); slot bekas langsung dapat digunakan kembali. */
 int main(void) {

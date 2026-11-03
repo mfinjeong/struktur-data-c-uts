@@ -1,23 +1,41 @@
-# Struktur Data C — latihan UTS modul 1–6
+# Struktur Data C — bahan belajar sampai Queue
 
-Kumpulan **13 program C11 mandiri** untuk belajar, membaca kode, melakukan dry run, dan latihan UTS. Penjelasan serta contoh implementasi ditulis khusus untuk latihan ini; tidak menyertakan salinan slide/PDF kuliah. Ini bahan belajar pribadi, bukan pengganti penjelasan dosen atau jawaban untuk diserahkan sebagai tugas.
+Kumpulan **program C11** untuk belajar, membaca kode, melakukan dry run, dan latihan UTS. Susunan materi mengacu pada *Modul Ajar Struktur Data* yang diberikan pengguna, disusun oleh Dr. Sri Wahyuni, S.Kom., M.Kom., Program Studi Ilmu Komputer FMIPA Universitas Negeri Medan, 2026. Kode ditulis sebagai implementasi latihan yang dapat dijalankan, bukan salinan dokumen kuliah atau jawaban untuk diserahkan sebagai tugas.
+
+Folder memakai **nama materi**, bukan nomor modul. Dokumen kuliah tidak ikut dipublikasikan. Pembatasan pengguna tetap berlaku: **array satu dimensi**, **single linked list**, dan berhenti sampai **queue**. Bagian array multidimensi, double/circular linked list, tree, graph, dan proyek akhir sengaja tidak diimplementasikan.
+
+> Dalam dokumen, UTS dijadwalkan pada minggu ke-8 dan Queue pada minggu ke-9. Repo ini tetap memuat Queue sesuai permintaan pengguna; batas ujian resmi mengikuti arahan dosen.
+
+## Navigasi berdasarkan materi
+
+| Folder | Rujukan dokumen | Isi utama |
+|---|---|---|
+| [`pengantar_dan_kompleksitas/`](pengantar_dan_kompleksitas/) | Bagian 1.1–1.6 dan Praktikum 1 | Konsep, ADT, model biaya, perbandingan langkah pencarian |
+| [`array_1_dimensi/`](array_1_dimensi/) | Bagian 2.1–2.2, 2.4–2.6 | Dasar array 1D, operasi, penggabungan, alokasi dinamis |
+| [`searching/`](searching/) | Bagian 3.1 | Sequential/linear search dan binary search |
+| [`sorting/`](sorting/) | Bagian 3.2–3.4 dan Praktikum 3 | Bubble, selection, insertion, merge, quick; perbandingan kerja |
+| [`single_linked_list/`](single_linked_list/) | Bagian 4.1–4.2 dan Praktikum 4 | Simpul satu arah, operasi pointer, perbandingan lompatan |
+| [`stack/`](stack/) | Bagian 5.1–5.7 dan Praktikum 5 | Stack array/single linked list, tanda kurung, notasi |
+| [`queue/`](queue/) | Bagian 6.1–6.8 dan Praktikum 6 | Linear, false overflow, circular, single linked list, priority, simulasi loket |
+
+Implementasi aman dapat berbeda dari potongan ringkas dokumen: validasi input, pemeriksaan batas/overflow dan kegagalan alokasi tidak dihilangkan. `sizeof` memakai `%zu`; ukuran tipe C tidak diasumsikan sama pada semua platform. Big-O adalah batas atas, bukan sinonim otomatis kasus terburuk; tuliskan kasus input yang sedang dianalisis.
 
 **Batas materi:** pengantar struktur data dan kompleksitas, array **satu dimensi** statis/dinamis, pencarian, lima sorting, **singly linked list**, stack dan aplikasi notasi, queue linear/circular/priority. Tidak ada array multidimensi, doubly/circular linked list, tree, graph, atau proyek modul 7–9.
 
 ## 1. Mulai menjalankan
 
-Tidak ada dependensi pustaka tambahan. Setiap `.c` mempunyai `main` sendiri: **kompilasi satu berkas**, bukan semua `main` sekaligus. Gunakan GCC, Clang, atau Zig dengan dukungan C11. Python diperlukan hanya untuk tes otomatis.
+Tidak ada dependensi pustaka tambahan. **Kompilasi satu berkas program**, bukan semua `main` sekaligus. Simpan header lokal di folder yang sama: contoh sorting terpisah memakai `input_array.h` dan `statistik_sorting.h`; program perbandingan menyertakan implementasi algoritmenya dengan `SORT_LIBRARY`. Tidak perlu menambahkan semua berkas sorting ke perintah compiler. Gunakan GCC, Clang, atau Zig dengan dukungan C11. Python diperlukan hanya untuk tes otomatis.
 
 Dari direktori repositori, buat folder `build` lebih dahulu (`mkdir build` di PowerShell/cmd; `mkdir -p build` di bash).
 
 ```sh
 # GCC; ganti gcc dengan clang jika menggunakan Clang
-gcc -std=c11 -Wall -Wextra -Werror -pedantic modul02/array_statis.c -o build/array_statis
+gcc -std=c11 -Wall -Wextra -Werror -pedantic array_1_dimensi/array_statis.c -o build/array_statis
 # Windows: tambahkan .exe pada nama keluaran bila diperlukan
 ./build/array_statis
 
 # Zig (pastikan zig tersedia di PATH)
-zig cc -std=c11 -Wall -Wextra -Werror -pedantic modul03/sorting.c -o build/sorting
+zig cc -std=c11 -Wall -Wextra -Werror -pedantic sorting/pilihan_sorting.c -o build/sorting
 ./build/sorting
 ```
 
@@ -32,7 +50,7 @@ python tests/run_tests.py --cc 'zig cc'
 # Atau env CC; quoting contoh berikut untuk bash:
 CC='zig cc' python tests/run_tests.py
 # Filter satu sumber/modul:
-python tests/run_tests.py --cc 'zig cc' --only modul05
+python tests/run_tests.py --cc 'zig cc' --only stack
 ```
 
 `--cc` menerima satu string perintah, termasuk argumen compiler. Gunakan **forward slash** untuk path Windows. Untuk path yang mengandung spasi, sertakan kutip ganda DI DALAM nilai argumen, misalnya di bash/PowerShell:
@@ -43,7 +61,7 @@ python tests/run_tests.py --cc '"C:/Program Files/zig/zig.exe" cc'
 
 Runner stdlib Python memanggil compiler dan executable sungguhan (bukan simulasi), memakai flag `-std=c11 -Wall -Wextra -Werror -pedantic`, batas waktu kompilasi/eksekusi, dan membandingkan baris output yang diharapkan secara berurutan. Build dan laporan JSON lokal berada di `build/` dan diabaikan Git. MSVC bukan target flag runner ini.
 
-**Verifikasi aktual:** Zig 0.14.1 di Windows, **172/172 kasus lolos**, seluruh **13 program** terkompilasi tanpa warning dengan flag di atas. Tes mencakup CRUD/batas, array tumbuh/penuh, kosong, negatif/nol/duplikat, pencarian gagal, seluruh sorting dua arah dan data terurut/terbalik, penghapusan head/tail linked list, LIFO/FIFO, reuse/wraparound, FIFO prioritas sama, kesalahan notasi, pembagian nol, overflow, perintah salah, dan pemulihan setelah baris terlalu panjang. Jalankan ulang pada mesin sendiri; laporan aktual tersimpan di `build/test-report.json`.
+**Verifikasi aktual:** Zig 0.14.1 di Windows, **274/274 kasus lolos**, seluruh **31 program** terkompilasi tanpa warning dengan flag di atas. Tes mencakup CRUD/batas, array tumbuh/penuh, kosong, negatif/nol/duplikat, pencarian gagal, seluruh sorting dua arah dan data terurut/terbalik, penghapusan head/tail linked list, LIFO/FIFO, reuse/wraparound, FIFO prioritas sama, kesalahan notasi, pembagian nol, overflow, perintah salah, dan pemulihan setelah baris terlalu panjang. Jalankan ulang pada mesin sendiri; laporan aktual tersimpan di `build/test-report.json`.
 
 Urutan kerja awal: kasus tes ditulis sebelum sumber C; eksekusi pertama terblokir karena compiler belum tersedia. Setelah compiler tersedia, kompilasi sebelum sumber ada gagal, lalu sumber dibuat dan seluruh kasus dieksekusi hingga hijau. Warm-up compiler Zig sempat melewati batas waktu awal; runner memberi batas kompilasi 360 detik agar build cache pertama dapat selesai. Kegagalan sebelum implementasi itu bukan klaim bahwa tes perilaku sempat berjalan pada program yang belum ada.
 
@@ -51,21 +69,65 @@ Urutan kerja awal: kasus tes ditulis sebelum sumber C; eksekusi pertama terbloki
 
 | Modul | Berkas | Fokus |
 |---|---|---|
-| 01 | `modul01/kompleksitas.c` | menghitung model operasi O(1), O(n), O(n²) |
-| 02 | `modul02/array_statis.c` | CRUD array 1D kapasitas delapan |
-| 02 | `modul02/array_dinamis.c` | CRUD, `malloc` melalui `realloc(NULL, ...)`, pertumbuhan kapasitas, `free` |
-| 03 | `modul03/linear_search.c` | pencarian sekuensial, indeks pertama |
-| 03 | `modul03/binary_search.c` | lower bound pada array naik, indeks pertama |
-| 03 | `modul03/sorting.c` | bubble, selection, insertion, merge, quick; naik/turun |
-| 04 | `modul04/singly_linked_list.c` | node satu arah, head/tail, insert/delete/find/free |
-| 05 | `modul05/stack_array.c` | push/pop/peek, LIFO, overflow/underflow kapasitas |
-| 05 | `modul05/infix_postfix.c` | konversi notasi dengan stack operator |
-| 05 | `modul05/postfix_evaluation.c` | evaluasi dengan stack operand bertipe int |
-| 06 | `modul06/queue_linear.c` | FIFO array, dequeue menggeser isi |
-| 06 | `modul06/queue_circular.c` | FIFO array, indeks modulo kapasitas |
-| 06 | `modul06/priority_queue.c` | array terurut, prioritas kecil lebih dahulu |
+| 01 | `pengantar_dan_kompleksitas/kompleksitas.c` | menghitung model operasi O(1), O(n), O(n²) |
+| 02 | `array_1_dimensi/array_statis.c` | CRUD array 1D kapasitas delapan |
+| 02 | `array_1_dimensi/array_dinamis.c` | CRUD, `malloc` melalui `realloc(NULL, ...)`, pertumbuhan kapasitas, `free` |
+| 03 | `searching/linear_search.c` | pencarian sekuensial, indeks pertama |
+| 03 | `searching/binary_search.c` | lower bound pada array naik, indeks pertama |
+| 03 | `sorting/pilihan_sorting.c` | bubble, selection, insertion, merge, quick; naik/turun |
+| 04 | `single_linked_list/singly_linked_list.c` | node satu arah, head/tail, insert/delete/find/free |
+| 05 | `stack/stack_array.c` | push/pop/peek, LIFO, overflow/underflow kapasitas |
+| 05 | `stack/infix_postfix.c` | konversi notasi dengan stack operator |
+| 05 | `stack/postfix_evaluation.c` | evaluasi dengan stack operand bertipe int |
+| 06 | `queue/queue_linear_geser.c` | FIFO array, dequeue menggeser isi |
+| 06 | `queue/queue_circular.c` | FIFO array, indeks modulo kapasitas |
+| 06 | `queue/priority_queue.c` | array terurut, prioritas kecil lebih dahulu |
 
-Baca berurutan: kontrak input → komentar invarian → cabang operasi → tes. Helper input sengaja diulang agar masing-masing berkas bisa dikompilasi tanpa header proyek. Algoritme tidak disembunyikan di framework generik.
+Baca berurutan: kontrak input → komentar invarian → cabang operasi → tes. Contoh dasar mempertahankan helper input di masing-masing berkas; contoh sorting berbagi dua header lokal agar algoritme tiap berkas lebih mudah dipelajari. Tidak ada framework generik.
+
+### Tambahan sesuai uraian dan praktikum dokumen
+
+| Berkas | Cara mencoba / tujuan |
+|---|---|
+| [`perbandingan_langkah.c`](pengantar_dan_kompleksitas/perbandingan_langkah.c) | Tanpa input; benar-benar mencari elemen terakhir pada 1.000, 10.000, 100.000, dan 1.000.000 elemen sambil menghitung pemeriksaan sequential/binary. |
+| [`dasar_array.c`](array_1_dimensi/dasar_array.c) | Tanpa input; inisialisasi array 1D, kuadrat, alamat aktual, `sizeof`, dan rerata. Alamat memori dapat berubah antar-eksekusi. |
+| [`penggabungan_array.c`](array_1_dimensi/penggabungan_array.c) | Input `n nilai... m nilai...`, panjang masing-masing 0–128; penggabungan berarti konkatenasi, bukan merge dua array terurut. |
+| [`bubble_sort.c`](sorting/bubble_sort.c) | Bubble dengan penghentian awal. |
+| [`selection_sort.c`](sorting/selection_sort.c) | Selection dengan pencarian minimum. |
+| [`insertion_sort.c`](sorting/insertion_sort.c) | Insertion dengan pergeseran prefix terurut. |
+| [`merge_sort.c`](sorting/merge_sort.c) | Merge sort dengan buffer bantu 1D. |
+| [`quick_sort.c`](sorting/quick_sort.c) | Quick sort dengan partisi dan pivot; baca komentar batas kasus terburuk. |
+| [`perbandingan_sorting.c`](sorting/perbandingan_sorting.c) | Tanpa input; lima algoritme pada data acak deterministik, terurut, dan terbalik, masing-masing 128 elemen. Menghitung perbandingan, pertukaran, dan pergeseran dari operasi nyata, bukan waktu rekaan. |
+| [`operasi_single_linked_list.c`](single_linked_list/operasi_single_linked_list.c) | Versi head-only seperti materi: `front x`, `back x`, `after acuan baru`, `delete nilai`, `find nilai`, `print`, `clear`, `quit`. Acuan/duplikat memakai kecocokan pertama. |
+| [`perbandingan_lompatan.c`](single_linked_list/perbandingan_lompatan.c) | Tanpa input; membangun list 100, 1.000, 5.000 node dan menghitung lompatan `next` pada sisip depan/belakang. |
+| [`stack_linked_list.c`](stack/stack_linked_list.c) | Stack dengan satu pointer `next`; `push x`, `pop`, `peek`, `print`, `clear`, `quit`. Print **top ke bawah**, berbeda dari contoh stack array yang bottom ke top. |
+| [`cek_tanda_kurung.c`](stack/cek_tanda_kurung.c) | Ekspresi per baris; mengecek `()`, `[]`, `{}`. Karakter selain kurung diabaikan. Paling banyak 100 kurung buka yang belum ditutup. |
+| [`notasi_ekspresi.c`](stack/notasi_ekspresi.c) | Infix **angka satu digit** per baris → `POSTFIX`, `HASIL`, `DEPTH`; mencakup contoh numerik praktikum. Tidak mendukung unary minus atau angka multidigit pada infix. |
+| [`queue_linear.c`](queue/queue_linear.c) | Linear front/rear berkapasitas lima; `enqueue x`, `dequeue`, `peek`, `print`, `status`, `reset`, `quit`. Sengaja memperlihatkan false overflow sesuai bagian 6.3. |
+| [`queue_linked_list.c`](queue/queue_linked_list.c) | FIFO dengan single linked list dan pointer depan/belakang; `enqueue x`, `dequeue`, `peek`, `print`, `clear`, `quit`. |
+| [`perbandingan_queue.c`](queue/perbandingan_queue.c) | Tanpa input; enqueue 1–5, dequeue dua kali, lalu mencoba enqueue 6 pada linear dan circular berkapasitas lima. |
+| [`simulasi_antrean.c`](queue/simulasi_antrean.c) | Tanpa input; tiga skenario 120 menit dengan kapasitas 20. Interval kedatangan/layanan: (3,2), (2,2), (2,3). |
+
+Lima berkas sorting terpisah menerima satu input **`n nilai0 ... nilai(n-1)`** dan menghasilkan urutan **menaik**. Untuk memilih naik/turun secara eksplisit, gunakan `pilihan_sorting.c` dengan formatnya di bawah. Batas n pada contoh terpisah adalah 128. Header sorting harus tetap berada di direktori yang sama setelah diunduh.
+
+Contoh menjalankan materi yang sudah dipisahkan:
+
+```sh
+gcc -std=c11 -Wall -Wextra -Werror -pedantic sorting/bubble_sort.c -o build/bubble_sort
+# Jalankan, lalu ketik: 5 9 3 -1 0 3
+./build/bubble_sort
+
+gcc -std=c11 -Wall -Wextra -Werror -pedantic queue/perbandingan_queue.c -o build/perbandingan_queue
+./build/perbandingan_queue
+```
+
+Perbedaan penting untuk belajar:
+- `singly_linked_list.c` mempertahankan tail sehingga tambah belakang O(1); `operasi_single_linked_list.c` memakai head-only sehingga tambah belakang O(n), sesuai contoh bagian 4.2.
+- `perbandingan_lompatan.c` menghitung **perpindahan ke node next yang tidak NULL**, bukan jumlah alokasi atau seluruh operasi CPU. Sisip pertama/kedua di belakang belum menimbulkan lompatan dengan definisi ini.
+- `queue_linear.c` menolak enqueue ketika rear sudah mencapai ujung, meskipun ada slot kosong di depan; `reset` diperlukan untuk menginisialisasi ulang. `queue_linear_geser.c` adalah alternatif yang merapatkan data saat dequeue; `queue_circular.c` memakai modulo untuk memakai ulang slot.
+- `simulasi_antrean.c` memproses kedatangan **sebelum** pelayanan pada menit yang sama. `peak_instant` diukur sebelum pelayanan; `peak_end_tick` sesudahnya, seperti pengamatan akhir menit dalam modul. Selalu berlaku `arrived = served + rejected + remaining`. Angka ini hasil simulasi model, bukan data antrean kampus nyata.
+- Pengecekan kurung memeriksa pasangan dan urutan kurung, bukan seluruh grammar ekspresi; teks biasa tanpa kurung dinilai seimbang. Validasi ekspresi aritmetika dilakukan oleh program notasi.
+- Bagian ADT dibaca sebagai **kontrak operasi** (create/isEmpty/isFull/push/pop/peek atau enqueue/dequeue/front); representasi array dan single linked list adalah dua implementasi yang perlu dibandingkan, bukan dua ADT berbeda.
 
 ## 3. Kontrak input/output umum
 
@@ -151,7 +213,7 @@ Binary memakai interval `[lo,hi)` dengan `hi=n`. Jika `a[mid]<target`, buang sis
 
 ### Modul 03 — sorting
 
-Baris pertama: `algoritme arah`. Algoritme: `bubble`, `selection`, `insertion`, `merge`, `quick`; arah: `asc` atau `desc`. Baris kedua mengikuti format array pencarian. Program mengurutkan sekali lalu selesai. Arah/algoritme salah ditolak, bukan fallback diam-diam.
+Untuk `sorting/pilihan_sorting.c`, baris pertama: `algoritme arah`. Algoritme: `bubble`, `selection`, `insertion`, `merge`, `quick`; arah: `asc` atau `desc`. Baris kedua mengikuti format array pencarian. Program mengurutkan sekali lalu selesai. Arah/algoritme salah ditolak, bukan fallback diam-diam.
 
 ```text
 Input:
@@ -222,7 +284,7 @@ pop                    ERROR kosong
 
 ### Modul 05 — konversi infix → postfix
 
-Satu ekspresi per baris hingga EOF. **Grammar dibatasi:** operand tepat satu huruf ASCII `A..Z` atau `a..z`; operator **biner** `+ - * /`, tanda kurung dan whitespace. Tidak mendukung angka, nama panjang `total`, perkalian implisit `A(B)`, unary `-A`, pangkat, ataupun assignment. `A B` juga salah, bukan operand `AB`.
+Satu ekspresi per baris hingga EOF. **Grammar dibatasi:** operand tepat satu huruf ASCII `A..Z` atau `a..z`, atau satu digit `0..9`; operator **biner** `+ - * /`, tanda kurung dan whitespace. Tidak mendukung bilangan multidigit pada infix, nama panjang `total`, perkalian implisit `A(B)`, unary `-A`, pangkat, ataupun assignment. `A B` juga salah, bukan operand `AB`.
 
 Precedence: `* /` di atas `+ -`; seluruh operator left-associative. Pop operator dengan precedence **lebih besar atau sama** sebelum push operator berikutnya. Kurung tidak ikut output. State `need_operand` memeriksa urutan operand/operator. Stack overflow/underflow, kurung tidak seimbang, dan bentuk tidak sah → `ERROR ekspresi`; tidak mencetak output parsial.
 
@@ -256,11 +318,11 @@ ERROR ekspresi
 
 Pembagian C11 dipotong menuju nol (`-8/3=-2`). Pembagian nol, `INT_MIN / -1`, overflow tambah/kurang/kali, operand kurang, hasil berlebih, token tidak sah, ekspresi kosong, atau baris lebih panjang dari 511 karakter menghasilkan `ERROR ekspresi`. Pemeriksaan dilakukan **sebelum** operasi yang bisa overflow; mengganti tipe hasil setelah operasi tidak akan memperbaiki undefined behavior.
 
-### Modul 06 — queue linear dan circular
+### Queue linear dengan penggeseran dan circular
 
 Kapasitas delapan. Perintah: `enqueue nilai`, `dequeue`, `peek`, `print`, `quit`. Dequeue mencetak `DEQUEUE nilai`; peek `FRONT nilai`; print urutan layanan front ke rear. Penuh/kosong tidak mengubah isi.
 
-- **Linear:** isi aktif di `a[0..n)`; dequeue menggeser n−1 elemen agar slot bekas dapat dipakai lagi. Bukan versi linear yang menyia-nyiakan slot depan sampai reset.
+- **Varian geser (`queue_linear_geser.c`):** isi aktif di `a[0..n)`; dequeue menggeser n−1 elemen agar slot bekas dapat dipakai lagi. Ini alternatif pembanding, **bukan** implementasi linear front/rear pada bagian 6.3 dokumen. Versi sesuai bagian tersebut tersedia di `queue_linear.c`, berkapasitas lima dan sengaja memperlihatkan false overflow.
 - **Circular:** `front` dan ukuran `n`; posisi enqueue `(front+n)%8`, dequeue memajukan `front=(front+1)%8`. `n=0` kosong, `n=8` penuh. Semua delapan slot dapat digunakan, tanpa menyisakan satu slot pembeda.
 
 ```text

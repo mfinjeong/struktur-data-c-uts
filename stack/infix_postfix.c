@@ -20,8 +20,8 @@ static int read_line(char *s, size_t cap) {
     return -1;
 }
 
-/* Grammar: satu huruf ASCII per operand; operator biner + - * /;
-   tanda kurung dan spasi diizinkan, TANPA unary, pangkat, atau angka.
+/* Grammar: satu huruf ASCII atau satu digit per operand; operator biner + - * /;
+   tanda kurung dan spasi diizinkan, TANPA unary, pangkat, atau bilangan multi-digit.
    Shunting-yard: tiap simbol push/pop sekali -> O(L), ruang O(L).
    need_operand mencegah AB, A++, (), dan tanda kurung implisit. */
 static int letter(unsigned char c) { return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'); }
@@ -33,7 +33,7 @@ static int convert(const char *s, char *out) {
     for (i = 0; s[i] != '\0'; ++i) {
         unsigned char c = (unsigned char)s[i];
         if (isspace(c)) continue;
-        if (letter(c)) {
+        if (letter(c) || (c >= '0' && c <= '9')) {
             if (!need_operand) return 0;
             out[used++] = (char)c; out[used++] = ' '; need_operand = 0;
         } else if (c == '(') {
